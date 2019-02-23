@@ -55,16 +55,16 @@ const syncOpts = {
 // task section
 function swallowError (error) {
   // If you want details of the error in the console
-  console.error(error.toString())
-  this.emit('end')
+  console.error(error.toString());
+  this.emit('end');
 }
 
-function clean(cb) {
-  del([dist + "*"])
-  cb()
+function clean(done) {
+  del([dist + "*"]);
+  done();
 }
 
-function style(cb) {
+function style(done) {
   src(css.in)
       .pipe(sourcemaps.init())
       .pipe(sass(css.sassOpts))
@@ -74,19 +74,19 @@ function style(cb) {
       .pipe(dest(css.out))
       .pipe(browserSync.stream());
   
-  cb()
+  done();
 }
 
-function htmlminify(cb) {
+function htmlminify(done) {
   src(html.in)
       .pipe(htmlmin({ collapseWhitespace: true }))
       .pipe(dest(html.out))
       .pipe(browserSync.stream());
  
-  cb()
+  done();
 }
 
-function script(cb) {
+function script(done) {
   const files = glob.sync(js.in);
   files.forEach(entry => {
     const name = path.basename(entry);
@@ -105,21 +105,21 @@ function script(cb) {
     .pipe(sourcemaps.write('.'))
     .pipe(dest(js.out))
     .pipe(browserSync.stream())
-  })
+  });
 
-  cb();
+  done();
 }
 
-function bSync(cb) {
+function bSync(done) {
   browserSync.init(syncOpts);
-  cb()
+  done();
 }
 
-function watchAll(cb) {
+function watchAll(done) {
   watch(css.watch, style);  
   watch(html.watch, htmlminify); 
   watch(js.watch, script);
-  cb();
+  done();
 }
 
 
