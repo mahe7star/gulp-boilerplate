@@ -5,19 +5,15 @@ const path = require("path");
 const sass = require('gulp-sass');
 const autoprefixer = require('gulp-autoprefixer');
 const sourcemaps = require('gulp-sourcemaps');
-
-const nunjucksRender = require("gulp-nunjucks-render");
 const htmlmin = require('gulp-htmlmin');
-
 const browserSync = require("browser-sync").create();
-
-const browserify = require('browserify')
-const glob = require('glob')
-const babelify = require('babelify')
-const source = require('vinyl-source-stream')
-const rename = require('gulp-rename')
-const buffer = require('vinyl-buffer')
-const uglify = require('gulp-uglify')
+const browserify = require('browserify');
+const glob = require('glob');
+const babelify = require('babelify');
+const source = require('vinyl-source-stream');
+const rename = require('gulp-rename');
+const buffer = require('vinyl-buffer');
+const uglify = require('gulp-uglify');
 
 const dist = "dist/";
 const sourceFiles = "src/";
@@ -57,6 +53,12 @@ const syncOpts = {
 }
 
 // task section
+function swallowError (error) {
+  // If you want details of the error in the console
+  console.error(error.toString())
+  this.emit('end')
+}
+
 function clean(cb) {
   del([dist + "*"])
   cb()
@@ -66,11 +68,11 @@ function style(cb) {
   src(css.in)
       .pipe(sourcemaps.init())
       .pipe(sass(css.sassOpts))
+      .on('error', swallowError)
       .pipe(autoprefixer(css.autoprefixerOpts))
       .pipe(sourcemaps.write('.'))
       .pipe(dest(css.out))
       .pipe(browserSync.stream());
-  watch(css.watch, style)
   
   cb()
 }
@@ -80,7 +82,7 @@ function htmlminify(cb) {
       .pipe(htmlmin({ collapseWhitespace: true }))
       .pipe(dest(html.out))
       .pipe(browserSync.stream());
-  watch(html.watch, htmlminify)
+ 
   cb()
 }
 
@@ -88,16 +90,13 @@ function script(cb) {
   const files = glob.sync(js.in);
   files.forEach(entry => {
     const name = path.basename(entry);
-    
     return browserify({entries: entry, debug: true})
     .transform(babelify, {
       presets: ["env"],
-      extensions: [".js"],
-      plugins: [
-        "transform-object-rest-spread"
-      ]
+      extensions: [".js"]
     })
     .bundle()
+    .on('error', swallowError)
     .pipe(source(name))
     .pipe(rename({extname: '.min.js'}))
     .pipe(buffer())
@@ -105,11 +104,10 @@ function script(cb) {
     .pipe(uglify())
     .pipe(sourcemaps.write('.'))
     .pipe(dest(js.out))
-    .pipe(browserSync.stream());
+    .pipe(browserSync.stream())
   })
 
-  watch(js.watch, series(script, browserSync.reload))
-  cb()
+  cb();
 }
 
 function bSync(cb) {
@@ -117,7 +115,16 @@ function bSync(cb) {
   cb()
 }
 
+function watchAll(cb) {
+  watch(css.watch, style);  
+  watch(html.watch, htmlminify); 
+  watch(js.watch, script);
+  cb();
+}
+
+
 exports.script = script;
 exports.htmlminify = htmlminify;
-
-exports.default = series(clean, style, htmlminify, script, bSync);
+exports.watchAll = watchAll;
+exports.build = series(clean, style, htmlminify, script);
+exports.default = series(clean, style, htmlminify, script, watchAll, bSync);

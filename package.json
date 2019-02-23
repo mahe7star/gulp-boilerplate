@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "watch": "gulp"
+    "serve": "gulp"
   },
   "author": "",
   "license": "ISC",
@@ -12,7 +12,6 @@
     "@babel/core": "^7.3.3",
     "@babel/preset-env": "^7.3.1",
     "babel-core": "^6.26.3",
-    "babel-plugin-transform-object-rest-spread": "^6.26.0",
     "babel-preset-env": "^1.7.0",
     "babelify": "^8.0.0",
     "browser-sync": "^2.26.3",
